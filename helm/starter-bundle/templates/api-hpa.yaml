@@ -1,0 +1,25 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.api.service.name }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    component: {{ .Values.api.service.name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        component: {{ .Values.api.service.name }}
+        release: {{ .Release.Name }}
+  minReplicas: {{ .Values.api.hpa.minReplicas }}
+  maxReplicas: {{ .Values.api.hpa.maxReplicas }}
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: {{ .Values.api.service.name }}
+    namespace: {{ .Release.Namespace }}
+  targetCPUUtilizationPercentage: {{ .Values.api.hpa.targetCPUUtilizationPercentage }}

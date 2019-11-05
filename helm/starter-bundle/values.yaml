@@ -1,0 +1,43 @@
+apiUser: "admin"
+frontend:
+  replicaCount: 1
+  image:
+    name: starter-bundle-frontend
+    pullPolicy: Always
+  service:
+    name: starter-bundle-frontend
+    type: LoadBalancer
+    externalPort: 443
+    internalPort: 5000
+    acmCert: arn:aws:acm:us-east-1:923133779345:certificate/c3ac7e05-a2ea-4316-ae42-f480eee49a36
+    # loadBalancerSourceRanges:
+    #   - 104.129.72.210/32
+    #   - 104.129.72.212/32
+    #   - 74.73.59.243/32
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  hpa:
+    minReplicas: 1
+    maxReplicas: 50
+    targetCPUUtilizationPercentage: 50
+
+api:
+  replicaCount: 1
+  image:
+    name: starter-bundle-api
+    pullPolicy: Always
+  service:
+    name: starter-bundle-api
+    type: ClusterIP
+    externalPort: 3000
+    internalPort: 3000
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  hpa:
+    minReplicas: 1
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 50

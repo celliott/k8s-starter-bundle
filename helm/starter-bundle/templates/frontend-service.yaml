@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "frontend.fullname" . }}
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ .Values.frontend.service.acmCert }}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: Name={{ template "name" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    component: {{ .Values.frontend.service.name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    buildNumber: "{{ .Values.build.tag }}"
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - port: {{ .Values.frontend.service.externalPort }}
+      targetPort: {{ .Values.frontend.service.internalPort }}
+      protocol: TCP
+      name: {{ .Values.frontend.service.name }}
+  selector:
+    component: {{ .Values.frontend.service.name }}
+{{- if contains "LoadBalancer" .Values.frontend.service.type }}
+  {{- if .Values.frontend.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.frontend.service.loadBalancerIP }}
+  {{- end -}}
+  {{- if .Values.frontend.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+  {{- range .Values.frontend.service.loadBalancerSourceRanges }}
+  - {{ . }}
+  {{- end }}
+  {{- end -}}
+{{- end -}}

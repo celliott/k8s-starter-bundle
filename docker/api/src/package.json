@@ -1,0 +1,23 @@
+{
+  "name": "api",
+  "version": "0.0.1",
+  "description": "API to return text",
+  "scripts": {
+    "start": "./server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/celliott/example-starter-bundle"
+  },
+  "author": "Chris Elliott",
+  "bugs": {
+    "url": "https://github.com/celliott/example-starter-bundle/issues"
+  },
+  "dependencies": {
+    "body-parser": "1.9.2",
+    "express": "4.10.1",
+    "morgan": ">=1.9.1",
+    "basic-auth": "1.0.0",
+    "newrelic": "5.11.0"
+  }
+}

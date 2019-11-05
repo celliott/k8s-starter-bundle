@@ -1,0 +1,69 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "frontend.fullname" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    component: {{ .Values.frontend.service.name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    buildNumber: "{{ .Values.build.tag }}"
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+       maxUnavailable: 25%
+       maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        component: {{ .Values.frontend.service.name }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.repository_base }}/{{ .Values.frontend.image.name }}:{{ .Values.build.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          env:
+            - name: NEW_RELIC_LICENSE_KEY
+              value: {{ .Values.new_relic_license_key }}
+            - name: NEW_RELIC_APP_NAME
+              value: {{ .Values.frontend.service.name }}
+            - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+              value: "true"
+            - name: NEW_RELIC_ENVIRONMENT
+              value: dev
+            - name: NEW_RELIC_ENVIRONMENT
+              value: newrelic.ini
+            - name: API_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "fullname" . }}
+                  key: api-host
+            - name: API_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "fullname" . }}
+                  key: api-port
+          envFrom:
+            - secretRef:
+                name: aws-secrets
+          ports:
+            - containerPort: {{ .Values.frontend.service.internalPort }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.service.internalPort }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.service.internalPort }}
+          resources:
+{{ toYaml .Values.frontend.resources | indent 12 }}
+    {{- if .Values.frontend.resources }}
+      nodeSelector:
+{{ toYaml .Values.frontend.nodeSelector | indent 8 }}
+    {{- end }}

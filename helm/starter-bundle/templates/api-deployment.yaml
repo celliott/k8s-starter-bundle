@@ -1,0 +1,63 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "api.fullname" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    component: {{ .Values.api.service.name }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    buildNumber: "{{ .Values.build.tag }}"
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+       maxUnavailable: 25%
+       maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        component: {{ .Values.api.service.name }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.repository_base }}/{{ .Values.api.image.name }}:{{ .Values.build.tag }}"
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          env:
+            - name: NEW_RELIC_LICENSE_KEY
+              value: {{ .Values.new_relic_license_key }}
+            - name: NEW_RELIC_APP_NAME
+              value: {{ .Values.api.service.name }}
+            - name: NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+              value: "true"
+            - name: NEW_RELIC_ENVIRONMENT
+              value: dev
+            - name: NEW_RELIC_NO_CONFIG_FILE
+              value: "true"
+            - name: NODE_ENV
+              value: production
+            - name: API_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "fullname" . }}
+                  key: api-port
+          ports:
+            - containerPort: {{ .Values.api.service.internalPort }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.api.service.internalPort }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.api.service.internalPort }}
+          resources:
+{{ toYaml .Values.api.resources | indent 12 }}
+    {{- if .Values.api.resources }}
+      nodeSelector:
+{{ toYaml .Values.api.nodeSelector | indent 8 }}
+    {{- end }}

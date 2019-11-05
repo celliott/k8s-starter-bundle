@@ -1,0 +1,29 @@
+1. Get the Frontend URL by running these commands:
+{{- if contains "NodePort" .Values.frontend.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "frontend.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.frontend.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get svc -w {{ template "frontend.fullname" . }}'
+  export SERVICE_HOST=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ template "frontend.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+  echo http://$SERVICE_HOST:{{ .Values.frontend.service.externalPort }}
+{{- else if contains "ClusterIP" .Values.frontend.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "name" . }},release={{ .Release.Name }},component={{ .Values.frontend.service.name }}" -o jsonpath="{.items[0].metadata.name}")
+  kubectl port-forward --namespace {{ .Release.Namespace }} $POD_NAME {{ .Values.frontend.service.externalPort }}:{{ .Values.frontend.service.externalPort }}
+{{- end }}
+
+2. Get the API URL by running these commands:
+{{- if contains "NodePort" .Values.api.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "api.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.api.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get svc -w {{ template "api.fullname" . }}'
+  export SERVICE_HOST=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ template "api.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+  echo http://$SERVICE_HOST:{{ .Values.api.service.externalPort }}
+{{- else if contains "ClusterIP" .Values.api.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "name" . }},release={{ .Release.Name }},component={{ .Values.api.service.name }}" -o jsonpath="{.items[0].metadata.name}")
+  kubectl port-forward --namespace {{ .Release.Namespace }} $POD_NAME {{ .Values.api.service.externalPort }}:{{ .Values.api.service.externalPort }}
+{{- end }}
